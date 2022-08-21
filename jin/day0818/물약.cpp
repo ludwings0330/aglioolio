@@ -1,63 +1,119 @@
 #include<iostream>
-#include<algorithm>
 #include<vector>
+#include<unordered_map>
+#include<string>
+#include<algorithm>
 
 using namespace std;
 
-struct Object {
-	int weight;
-	int value;
-};
+int N, M;
 
-bool cmp(Object A, Object B) {
-	if (A.value > B.value)
-		return true;
-	if (A.value < B.value)
-		return false;
-	if (A.weight > B.value)
-		return true;
-	if (A.value < B.value)
-		return false;
+unordered_map<string, long long>ingredient;
+vector<string>unsolved;
+
+bool cmp(string A, string B) {
+	int len;
+	if (A.length() < B.length())
+		len = A.length();
+	else
+		len = B.length();
+
+	for (int i = 0; i < len; i++) {
+		if (A[i] > B[i])
+			return true;
+		if (A[i] < B[i])
+			return false;
+	}
 	return false;
 }
 
-int N, K;
-vector<Object>vec;
-int dp[100001];
-
 int main() {
-	cin >> N >> K;
+	cin >> N >> M;
 
 	for (int i = 0; i < N; i++) {
-		int W, V;
-		cin >> W >> V;
-		vec.push_back({ W,V });
+		string str;
+		int a;
+		cin >> str >> a;
+		ingredient.insert(make_pair(str, a));
 	}
 
-	sort(vec.begin(), vec.end(), cmp);
+	for (int i = 0; i < M; i++) {
+		string equation;
+		cin >> equation;
 
-	for (int i = 1; i <= K; i++) {
-		dp[i] = -2134567890;
+		equation += "+";
+
+		unsolved.push_back(equation);
 	}
 
-	for (int i = 1; i <= K; i++) {
-		int sum = 0;
-		int maxPrevVal = -2134567890;
-		for (int j = 0; j < vec.size(); j++) {
+	int cnt = 0;
 
-			int a;
-			if (vec[j].weight > i) {
-				a = 0;
+	//sort(unsolved.begin(), unsolved.end(), cmp);
+
+	while (true) {
+		if (cnt == M * M)
+			break;
+
+		int flag = 0;
+
+		string equation = unsolved[0];
+		unsolved.erase(unsolved.begin());
+
+		string str;
+
+		int a = 0;
+		int b = 0;
+
+		b = equation.find("=", a);
+		str = equation.substr(a, b - a);
+
+		a = b + 1;
+
+		long long sum = 0;
+
+		while (true) {
+			b = equation.find("+", a);
+
+			if (b == -1) {
+				if (ingredient.count(str) == 0)
+					ingredient[str] = sum;
+				else if (ingredient[str] > sum)
+					ingredient[str] = sum;
+				break;
 			}
-			else
-				a = vec[j].value + dp[i - vec[j].weight];
-			
-			maxPrevVal = max(maxPrevVal, a);
+
+			string ing = equation.substr(a, b - a);
+
+			int price = stoi(ing.substr(0, 1));
+
+			ing.erase(0, 1);
+
+			if (ingredient.count(ing) == 0) {
+				unsolved.push_back(equation);
+				flag = 1;
+				break;
+			}
+			else {
+				sum += price * ingredient[ing];
+				if (sum > 1000000000)
+					sum = 1000000001;
+			}
+
+			a = b + 1;
 		}
 
-		dp[i] = maxPrevVal;
+		cnt++;
+
+		if (flag == 0)
+			unsolved.push_back(equation);
 	}
 
-	cout << dp[K];
+	if (ingredient.count("LOVE") == 0)
+		cout << -1;
+	else if (ingredient["LOVE"] > 1000000000)
+		cout << 1000000001;
+	else
+		cout << ingredient["LOVE"];
 
+	return 0;
 }
